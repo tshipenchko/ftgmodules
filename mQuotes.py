@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Зависимостей нет, ниебу зачем я тут это пишу
-"""
 # Hackintosh5 is gay
 
 # API Author: @mishase
