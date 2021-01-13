@@ -153,7 +153,7 @@ class AutoProfileMod(loader.Module):
             else:
                 return await utils.answer(message, self.strings("invalid_timezone", message))
         else:
-            timezone = "UCT"
+            timezone = "UTC"
 
         self.bio_enabled = True
         self.raw_bio = raw_bio
@@ -195,7 +195,7 @@ class AutoProfileMod(loader.Module):
             else:
                 return await utils.answer(message, self.strings("invalid_timezone", message))
         else:
-            timezone = "UCT"
+            timezone = "UTC"
 
         self.name_enabled = True
         self.raw_name = raw_name
