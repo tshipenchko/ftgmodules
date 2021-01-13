@@ -60,7 +60,7 @@ class AutoProfileMod(loader.Module):
                "removed_pfps": "<b>Removed {} profile pic(s)</b>",
                "invalid_timezone": "<b>{} timezone is invalid, <a "
                                    "href='https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568'>list of"
-                                   " timezones</a>"}
+                                   " timezones</a> or <code>.timezones</code>"}
 
     def __init__(self):
         self.bio_enabled = False
@@ -245,3 +245,8 @@ class AutoProfileMod(loader.Module):
         await self.allmodules.log("delpfp")
         await utils.answer(message, self.strings("removed_pfps", message).format(len(to_delete)))
         return await utils.answer(message, self.strings("how_many_pfps", message))
+
+    async def timezonescmd(self, message):
+        """Send list of all available timezones."""
+        msg = ",\n".join(pytz.all_timezones)
+        await utils.answer(message, msg)
