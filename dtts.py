@@ -1,7 +1,9 @@
+# requires: pydub requests
 import io
+import os
 import requests
-
 from .. import loader, utils
+from pydub import AudioSegment
 
 
 def register(cb):
@@ -28,7 +30,12 @@ class DttsMod(loader.Module):
         f = io.BytesIO(requests.get("https://station.aimylogic.com/generate", data=data).content)
         f.name = file
 
-        await message.client.send_file(message.to_id, f, voice_note=True, reply_to=reply)
+        if check_ffmpeg():
+            f, duration = to_voice(f)
+        else:
+            duration = None
+
+        await message.client.send_file(message.to_id, f, voice_note=True, reply_to=reply, duration=duration)
 
     async def levitancmd(self, message):
         """Levitan voice"""
@@ -42,5 +49,25 @@ class DttsMod(loader.Module):
         """Yandex voice"""
         await self.say(message, None, utils.get_args_raw(message))
 
+
+def check_ffmpeg():
+    """Checks is there ffmpeg"""
+    if os.system("ffmpeg -version") == 0:
+        return True
+    else:
+        return False
+
+
+def to_voice(item):
+    """Returns audio in opus format and it's duration"""
+    item.seek(0)
+    item = AudioSegment.from_file(item)
+    m = io.BytesIO()
+    m.name = "voice.ogg"
+    item.split_to_mono()
+    dur = len(item) / 1000
+    item.export(m, format="ogg", bitrate="64k", codec="libopus")
+    m.seek(0)
+    return m, dur
 
 # By @vreply @pernel_kanic @nim1love @db0mb3r and add @tshipenchko some geyporn
