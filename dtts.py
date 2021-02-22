@@ -17,11 +17,15 @@ class DttsMod(loader.Module):
                'no_text': "I can't say nothing"}
 
     async def say(self, message, speaker, text, file=".dtts.mp3"):
-        if not text:
-            return await utils.answer(message, self.strings['no_text'])
-
         reply = await message.get_reply_message()
-        await message.delete()
+        if not text:
+            if not reply:
+                return await utils.answer(message, self.strings['no_text'])
+            text = reply.raw_text  # use text from reply
+            if not text:
+                return await utils.answer(message, self.strings['no_text'])
+        if message.out:
+            await message.delete()  # Delete message only one is user's
         data = {"text": text}
         if speaker:
             data.update({"speaker": speaker})
