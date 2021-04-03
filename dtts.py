@@ -16,6 +16,9 @@ class DttsMod(loader.Module):
     strings = {'name': 'DTTS',
                'no_text': "I can't say nothing"}
 
+    def __init__(self):
+        self.is_ffmpeg = check_ffmpeg()
+
     async def say(self, message, speaker, text, file=".dtts.mp3"):
         reply = await message.get_reply_message()
         if not text:
@@ -34,12 +37,12 @@ class DttsMod(loader.Module):
         f = io.BytesIO(requests.get("https://station.aimylogic.com/generate", data=data).content)
         f.name = file
 
-        if check_ffmpeg():
+        if self.is_ffmpeg:
             f, duration = to_voice(f)
         else:
             duration = None
 
-        await message.client.send_file(message.to_id, f, voice_note=True, reply_to=reply, duration=duration)
+        await message.client.send_file(message.chat_id, f, voice_note=True, reply_to=reply, duration=duration)
 
     async def levitancmd(self, message):
         """Levitan voice"""
