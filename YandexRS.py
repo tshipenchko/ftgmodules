@@ -22,7 +22,7 @@ class YandexReverseSearchMod(loader.Module):
         if not data:
             await utils.answer(message, self.strings("no_reply", message))
             return
-        await utils.answer(message, self.strings("search", message))
+        message = await utils.answer(message, self.strings("search", message))
         searchUrl = 'https://yandex.ru/images/search'
         files = {'upfile': ('blob', data, 'image/jpeg')}
         params = {'rpt': 'imageview', 'format': 'json', 'request': '{"blocks":[{"block":"b-page_type_search-by-image__link"}]}'}
