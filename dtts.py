@@ -1,9 +1,10 @@
-# requires: pydub requests
+# requires: pydub requests gtts hachoir
 import io
 import os
 import requests
 from .. import loader, utils
 from pydub import AudioSegment
+from gtts import gTTS
 
 
 def register(cb):
@@ -13,10 +14,12 @@ def register(cb):
 class DttsMod(loader.Module):
     """Text to speech module"""
 
-    strings = {'name': 'DTTS',
-               'no_text': "I can't say nothing"}
+    strings = {"name": 'DTTS',
+               "no_text": "I can't say nothing",
+               "tts_lang_cfg": "Set your language code for the TTS here."}
 
     def __init__(self):
+        self.config = loader.ModuleConfig("TTS_LANG", "en", lambda m: self.strings("tts_lang_cfg", m))
         self.is_ffmpeg = check_ffmpeg()
 
     async def say(self, message, speaker, text, file=".dtts.mp3"):
@@ -44,17 +47,48 @@ class DttsMod(loader.Module):
 
         await message.client.send_file(message.chat_id, f, voice_note=True, reply_to=reply, duration=duration)
 
+    @loader.unrestricted
+    @loader.ratelimit
     async def levitancmd(self, message):
-        """Levitan voice"""
+        """Convert text to speech with levitan voice"""
         await self.say(message, "levitan", utils.get_args_raw(message))
 
+    @loader.unrestricted
+    @loader.ratelimit
     async def oksanacmd(self, message):
-        """Oksana voice"""
+        """Convert text to speech with oksana voice"""
         await self.say(message, "oksana", utils.get_args_raw(message))
 
+    @loader.unrestricted
+    @loader.ratelimit
     async def yandexcmd(self, message):
-        """Yandex voice"""
+        """Convert text to speech with yandex voice"""
         await self.say(message, None, utils.get_args_raw(message))
+
+    @loader.unrestricted
+    @loader.ratelimit
+    async def ttscmd(self, message):
+        """Convert text to speech with Google APIs"""
+        reply = await message.get_reply_message()
+        text = utils.get_args_raw(message.message)
+        if not text:
+            if message.is_reply:
+                text = (await message.get_reply_message()).message
+            else:
+                return await utils.answer(message, self.strings("no_text", message))
+
+        tts = await utils.run_sync(gTTS, text, lang=self.config["TTS_LANG"])
+        voice = io.BytesIO()
+        await utils.run_sync(tts.write_to_fp, voice)
+        voice.seek(0)
+        voice.name = "voice.mp3"
+
+        if self.is_ffmpeg:
+            voice, duration = to_voice(voice)
+        else:
+            duration = None
+
+        await message.client.send_file(message.chat_id, voice, voice_note=True, reply_to=reply, duration=duration)
 
 
 def check_ffmpeg():
