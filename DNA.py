@@ -6,10 +6,13 @@ from telethon.tl.types import DocumentAttributeFilename
 import logging
 from wand.image import Image
 from PIL import Image as IM
+
 # https://t.me/KeyZenD
 # https://t.me/govnocodules
 # https://t.me/DneZyeK
+# fucking geyporn me.tshelte.ru
 logger = logging.getLogger(__name__)
+
 
 def register(cb):
     cb(DistortNoApiMod())
@@ -19,7 +22,9 @@ def register(cb):
 class DistortNoApiMod(loader.Module):
     """distorting images"""
     strings = {
-        "name": "DistortNoApi"
+        "name": "DistortNoApi",
+        "bad_input": "<code>Reply to image or stick!</code>",
+        "processing": "<code>D i s t o r t i n g . . .</code>"
     }
 
     async def client_ready(self, client, db):
@@ -38,10 +43,10 @@ class DistortNoApiMod(loader.Module):
             reply_message = await message.get_reply_message()
             data, mime = await check_media(reply_message)
             if isinstance(data, bool):
-                await utils.answer(message, "<code>Reply to image or stick!</code>")
+                await utils.answer(message, self.strings("bad_input", message))
                 return
         else:
-            await utils.answer(message, "<code>Reply to image or stick!</code>")
+            await utils.answer(message, self.strings("bad_input", message))
             return
         rescale_rate = 70
         a = utils.get_args(message)
@@ -56,7 +61,7 @@ class DistortNoApiMod(loader.Module):
                     if rescale_rate <= 0:
                         rescale_rate = 70
 
-        await message.edit("<code>D i s t o r t i n g . . .</code>")
+        await utils.answer(message, self.strings("processing", message))
         file = await message.client.download_media(data, bytes)
         file, img = io.BytesIO(file), io.BytesIO()
         img.name = 'img.png'
@@ -68,22 +73,22 @@ class DistortNoApiMod(loader.Module):
         out.name = f'out.{mime}'
         im.save(out, mime.upper())
         out.seek(0)
-        await message.edit("<code>S e n d i n g . . .</code>")
-        await message.client.send_file(message.to_id, out, reply_to=reply_message.id)
 
-        await message.delete()
+        await utils.answer(message, out)
+
 
 async def distort(file, rescale_rate):
     img = Image(file=file)
     x, y = img.size[0], img.size[1]
-    popx = int(rescale_rate*(x//100))
-    popy = int(rescale_rate*(y//100))
+    popx = int(rescale_rate * (x // 100))
+    popy = int(rescale_rate * (y // 100))
     img.liquid_rescale(popx, popy, delta_x=1, rigidity=0)
     img.resize(x, y)
     out = io.BytesIO()
     out.name = f'output.png'
     img.save(file=out)
     return io.BytesIO(out.getvalue())
+
 
 async def check_media(reply_message):
     mime = None
