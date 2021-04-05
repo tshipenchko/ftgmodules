@@ -30,32 +30,33 @@ class AudioConverterMod(loader.Module):
 		"""
 		reply = await message.get_reply_message()
 		if not reply:
-			await message.edit("А где реплай?")
+			message = await utils.answer(message, "А где реплай?")
 			return
 		else:
 			try:
 				if reply.media.document.attributes[0].voice == True:
-					await message.edit("Это войс, а не аудиофайл!")
+					message = await utils.answer(message, "Это войс, а не аудиофайл!")
 					return
 			except:
-				await message.edit("Это не аудиофайл!")
+				message = await utils.answer(message, "Это не аудиофайл!")
 				return
-		await message.edit("Скачиваем...")
+		message = await utils.answer(message, "Скачиваем...")
 		au = io.BytesIO()
 		await message.client.download_media(reply.media.document, au)
 		au.seek(0)
-		await message.edit("Делаем войс...")
+		message = await utils.answer(message, "Делаем войс...")
 		audio = AudioSegment.from_file(au)
 		m = io.BytesIO()
 		m.name="voice.ogg" 
 		audio.split_to_mono()
-		await message.edit("Экспортируем...")
+		message = await utils.answer(message, "Экспортируем...")
 		dur = len(audio)/1000
 		audio.export(m, format="ogg", bitrate="64k", codec="libopus")
-		await message.edit("Отправляем...")
+		message = await utils.answer(message, "Отправляем...")
 		m.seek(0)
-		await message.client.send_file(message.to_id, m, reply_to=reply.id, voice_note=True, duration=dur)
-		await message.delete()
+		await message.client.send_file(message.chat_id, m, reply_to=reply.id, voice_note=True, duration=dur)
+		if message.out: await message.delete()
+
 	async def toformatcmd(self, message):
 		""".toformat [format] <reply to audio>
 		    Сконвертировать аудио/видео/войс в нужный формат
@@ -64,34 +65,34 @@ class AudioConverterMod(loader.Module):
 		frmts = ['ogg', 'mpeg', 'mp3', 'wav', 'oga', 'm4a', '3gp']
 		reply = await message.get_reply_message()
 		if not reply:
-			await message.edit("А где реплай?")
+			message = await utils.answer(message, "А где реплай?")
 			return
 		else:
 			try:
 				reply.media.document.attributes[0].duration
 				if utils.get_args_raw(message):
 					if utils.get_args_raw(message) not in frmts:
-						await message.edit(f"Формат {utils.get_args_raw(message)} для конвертирования не поддерживается!")
+						message = await utils.answer(message, f"Формат {utils.get_args_raw(message)} для конвертирования не поддерживается!")
 						return
 					formatik = utils.get_args_raw(message)
 				else:
-					await message.edit("Укажите формат конвертирования")
+					message = await utils.answer(message, "Укажите формат конвертирования")
 					return
 			except:
-				await message.edit("Это не аудиофайл!")
+				message = await utils.answer(message, "Это не аудиофайл!")
 				return
-		await message.edit("Скачиваем...")
+		message = await utils.answer(message, "Скачиваем...")
 		au = io.BytesIO()
 		await message.client.download_media(reply.media.document, au)
 		au.seek(0)
-		await message.edit(f"Конвертируем в {formatik}...")
+		message = await utils.answer(message, f"Конвертируем в {formatik}...")
 		audio = AudioSegment.from_file(au)
 		m = io.BytesIO()
 		m.name="Converted_to." + formatik
 		audio.split_to_mono()
-		await message.edit("Экспортируем...")
+		message = await utils.answer(message, "Экспортируем...")
 		audio.export(m, format=formatik)
-		await message.edit("Отправляем...")
+		message = await utils.answer(message, "Отправляем...")
 		m.seek(0)
-		await message.client.send_file(message.to_id, m, reply_to=reply.id, attributes=[types.DocumentAttributeAudio(duration = reply.document.attributes[0].duration, title=f"Converted to " + formatik, performer="Converter")])
-		await message.delete()
+		await message.client.send_file(message.chat_id, m, reply_to=reply.id, attributes=[types.DocumentAttributeAudio(duration = reply.document.attributes[0].duration, title=f"Converted to " + formatik, performer="Converter")])
+		if message.out: await message.delete()
